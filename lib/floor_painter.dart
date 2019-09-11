@@ -7,12 +7,12 @@ class FloorPainter extends CustomPainter {
   double _radius;
   MaterialColor _color;
 
-  List<List<int>> cells;
+  List<List<int>> _cells;
 
   Pair<int, int> _eatPoint;
 
   FloorPainter(
-      this._radius, this._color, this.cells, this._cellSize, this._eatPoint) {
+      this._radius, this._color, this._cells, this._cellSize, this._eatPoint) {
     _paint = Paint()
       ..strokeWidth = 10.0
       ..style = PaintingStyle.fill;
@@ -31,9 +31,9 @@ class FloorPainter extends CustomPainter {
   }
 
   void _drawCells(Canvas canvas) {
-    for (var i = 0; i < cells.length; i++) {
-      for (var j = 0; j < cells[0].length; j++) {
-        if (cells[i][j] == 1) {
+    for (var i = 0; i < _cells.length; i++) {
+      for (var j = 0; j < _cells[0].length; j++) {
+        if (_cells[i][j] == 1) {
           _paint.color = _color;
           canvas.drawCircle(
               Offset(i * _cellSize.toDouble() + _radius,

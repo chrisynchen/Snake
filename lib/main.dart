@@ -11,41 +11,29 @@ void main() => runApp(SnakeApp());
 
 class SnakeApp extends StatelessWidget {
   // This widget is the root of your application.
+
   @override
   Widget build(BuildContext context) {
-    AppBar appBar = AppBar(title: Text('This is title'));
-
     return MaterialApp(
         title: 'Flutter Demo',
         theme: ThemeData(
           primarySwatch: Colors.red,
         ),
-        home: Scaffold(
-          appBar: appBar,
-          body: SnakeHome(appBar.preferredSize.height,
-              title: 'Snake Game By Chris'),
-        ));
+        home: Scaffold(body: SnakeHome()));
   }
 }
 
 class SnakeHome extends StatefulWidget {
-  SnakeHome(this._appBarHeight, {Key key, this.title}) : super(key: key);
-
-  final String title;
-  final double _appBarHeight;
+  SnakeHome({Key key}) : super(key: key);
 
   @override
-  _SnakeHomeState createState() => _SnakeHomeState(_appBarHeight);
+  _SnakeHomeState createState() => _SnakeHomeState();
 }
 
 class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
-  final double _appBarHeight;
-
   final _cellSize = 16;
 
   List<List<int>> _cells;
-
-  _SnakeHomeState(this._appBarHeight);
 
   Queue snakeQueue = Queue<Pair<int, int>>();
 
@@ -61,7 +49,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   double _widgetHeight;
 
-  GlobalKey _containerKey = GlobalKey();
+  GameStatus status = GameStatus.START;
 
   @override
   void initState() {
@@ -70,7 +58,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     _observable =
-        Observable.periodic(Duration(milliseconds: 300), (_) => snakeQueue)
+        Observable.periodic(Duration(milliseconds: 500), (_) => snakeQueue)
             .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
             .listen(_updateView);
   }
@@ -96,20 +84,53 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    AppBar appBar = AppBar(
+      title: Text('Snake Game By Chris'),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(Icons.pause),
+          onPressed: () {
+            status = GameStatus.PAUSE;
+            _observable.pause();
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.play_arrow),
+          onPressed: () {
+            status = GameStatus.PAUSE;
+            _observable.resume();
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.refresh),
+          onPressed: () {
+            status = GameStatus.RESET;
+            _observable.pause();
+            _reset();
+            status = GameStatus.START;
+            _observable.resume();
+          },
+        )
+      ],
+    );
+
     if (_widgetWidth == null || _widgetHeight == null) {
       _widgetWidth = MediaQuery.of(context).size.width;
-      _widgetHeight = MediaQuery.of(context).size.height - _appBarHeight;
+      _widgetHeight = MediaQuery.of(context).size.height -
+          MediaQuery.of(context).padding.top -
+          appBar.preferredSize.height;
     }
 
     FloorPainter painter = _initPainter(context, _widgetWidth, _widgetHeight);
 
-    return GestureDetector(
-        onTapDown: (TapDownDetails details) => _onTapDown(context, details),
-        child: Container(
-            key: _containerKey,
-            width: _widgetWidth,
-            height: _widgetHeight,
-            child: CustomPaint(painter: painter)));
+    return Scaffold(
+        appBar: appBar,
+        body: GestureDetector(
+            onTapDown: (TapDownDetails details) => _onTapDown(context, details),
+            child: Container(
+                width: _widgetWidth,
+                height: _widgetHeight,
+                child: CustomPaint(painter: painter))));
   }
 
   void _onTapDown(BuildContext context, TapDownDetails details) {
@@ -161,28 +182,12 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   FloorPainter _initPainter(
       BuildContext context, double widgetWidth, double widgetHeight) {
-    int _columnSize = (widgetWidth / _cellSize).round();
-    int _rowSize = (widgetHeight / _cellSize).round();
-
     if (_cells == null) {
-      _cells = List<List<int>>.generate(
-          _columnSize,
-          (i) => List<int>.generate(_rowSize, (j) {
-                if (j == max(0, _rowSize ~/ 2 - 1) &&
-                    (i >= max(0, _columnSize ~/ 2 - 1) &&
-                        i <= _columnSize ~/ 2 + 1)) {
-                  snakeQueue.add(Pair<int, int>(i, j));
-                  return 1;
-                } else {
-                  return 0;
-                }
-              }));
-
-      Pair last = snakeQueue.last;
-      currentHead = Pair<int, int>(last.left, last.right);
+      _reset();
     }
 
-    return FloorPainter(8, Colors.blue, _cells, _cellSize, _eatPoint);
+    return FloorPainter(
+        _cellSize / 2, Colors.blue, _cells, _cellSize, _eatPoint);
   }
 
   Pair<int, int> _getEatPoint() {
@@ -193,6 +198,41 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     var column = random.nextInt(_cells[0].length);
     return Pair<int, int>(row, column);
   }
+
+  void _reset() {
+    int _columnSize = (_widgetWidth / _cellSize).round();
+    int _rowSize = (_widgetHeight / _cellSize).round();
+
+    var middleRow = _rowSize ~/ 2;
+    var middleColumn = _columnSize ~/ 2;
+
+    _initQueue(middleRow, middleColumn);
+
+    _cells = List<List<int>>.generate(
+        _columnSize,
+        (i) => List<int>.generate(_rowSize, (j) {
+              return 0;
+            }));
+
+    _cells[middleColumn - 2][middleRow] = 1;
+    _cells[middleColumn - 1][middleRow] = 1;
+    _cells[middleColumn][middleRow] = 1;
+
+    Pair last = snakeQueue.last;
+    currentHead = Pair<int, int>(last.left, last.right);
+    _eatPoint = null;
+
+    _currentDirection = Direction.RIGHT;
+  }
+
+  void _initQueue(int middleRow, int middleColumn) {
+    snakeQueue.clear();
+    snakeQueue.add(Pair<int, int>(middleColumn - 2, middleRow));
+    snakeQueue.add(Pair<int, int>(middleColumn - 1, middleRow));
+    snakeQueue.add(Pair<int, int>(middleColumn, middleRow));
+  }
 }
 
 enum Direction { LEFT, RIGHT, UP, DOWN }
+
+enum GameStatus { START, PAUSE, RESET }
