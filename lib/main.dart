@@ -7,6 +7,10 @@ import 'package:rxdart/rxdart.dart';
 import 'package:snake/floor_painter.dart';
 import 'package:snake/pair.dart';
 
+const CELL_SIZE = 20;
+const SNAKE_COLOR = Colors.green;
+const EAT_COLOR = Colors.brown;
+
 void main() => runApp(SnakeApp());
 
 class SnakeApp extends StatelessWidget {
@@ -31,8 +35,6 @@ class SnakeHome extends StatefulWidget {
 }
 
 class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
-  final _cellSize = 16;
-
   List<List<int>> _cells;
 
   Queue snakeQueue = Queue<Pair<int, int>>();
@@ -49,7 +51,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   double _widgetHeight;
 
-  GameStatus status = GameStatus.START;
+  var subject = PublishSubject<GameStatus>();
 
   @override
   void initState() {
@@ -75,10 +77,11 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
       print("paused");
-      _observable.pause();
+      _updateGameByStatus(GameStatus.PAUSE);
+      subject.close();
     } else if (state == AppLifecycleState.resumed) {
       print("resumed");
-      _observable.resume();
+      _updateGameByStatus(GameStatus.START);
     }
   }
 
@@ -90,25 +93,19 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
         IconButton(
           icon: Icon(Icons.pause),
           onPressed: () {
-            status = GameStatus.PAUSE;
-            _observable.pause();
+            _updateGameByStatus(GameStatus.PAUSE);
           },
         ),
         IconButton(
           icon: Icon(Icons.play_arrow),
           onPressed: () {
-            status = GameStatus.PAUSE;
-            _observable.resume();
+            _updateGameByStatus(GameStatus.START);
           },
         ),
         IconButton(
           icon: Icon(Icons.refresh),
           onPressed: () {
-            status = GameStatus.RESET;
-            _observable.pause();
-            _reset();
-            status = GameStatus.START;
-            _observable.resume();
+            _updateGameByStatus(GameStatus.RESET);
           },
         )
       ],
@@ -126,16 +123,16 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     return Scaffold(
         appBar: appBar,
         body: GestureDetector(
-            onTapDown: (TapDownDetails details) => _onTapDown(context, details),
+            onTapDown: (TapDownDetails details) => _onTapDown(details),
             child: Container(
                 width: _widgetWidth,
                 height: _widgetHeight,
                 child: CustomPaint(painter: painter))));
   }
 
-  void _onTapDown(BuildContext context, TapDownDetails details) {
-    var xCell = details.globalPosition.dx / _cellSize;
-    var yCell = details.globalPosition.dy / _cellSize;
+  void _onTapDown(TapDownDetails details) {
+    var xCell = details.globalPosition.dx / CELL_SIZE;
+    var yCell = details.globalPosition.dy / CELL_SIZE;
     if (_currentDirection == Direction.UP ||
         _currentDirection == Direction.DOWN) {
       if (currentHead.left - xCell > 0) {
@@ -163,6 +160,14 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       currentHead = Pair<int, int>(currentHead.left, currentHead.right + 1);
     }
 
+    if (currentHead.left < 0 ||
+        currentHead.left >= _cells.length ||
+        currentHead.right < 0 ||
+        currentHead.right >= _cells[0].length) {
+      _updateGameByStatus(GameStatus.PAUSE);
+      return;
+    }
+
     setState(() {
       //generate eat point
       _eatPoint = _getEatPoint();
@@ -187,7 +192,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     }
 
     return FloorPainter(
-        _cellSize / 2, Colors.blue, _cells, _cellSize, _eatPoint);
+        CELL_SIZE / 2, SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint);
   }
 
   Pair<int, int> _getEatPoint() {
@@ -200,8 +205,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
   }
 
   void _reset() {
-    int _columnSize = (_widgetWidth / _cellSize).round();
-    int _rowSize = (_widgetHeight / _cellSize).round();
+    int _columnSize = (_widgetWidth / CELL_SIZE).round();
+    int _rowSize = (_widgetHeight / CELL_SIZE).round();
 
     var middleRow = _rowSize ~/ 2;
     var middleColumn = _columnSize ~/ 2;
@@ -230,6 +235,28 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     snakeQueue.add(Pair<int, int>(middleColumn - 2, middleRow));
     snakeQueue.add(Pair<int, int>(middleColumn - 1, middleRow));
     snakeQueue.add(Pair<int, int>(middleColumn, middleRow));
+  }
+
+  void _updateGameByStatus(GameStatus status) {
+    switch (status) {
+      case GameStatus.START:
+        _observable.resume();
+        break;
+
+      case GameStatus.PAUSE:
+        if (!_observable.isPaused) {
+          _observable.pause();
+        }
+        break;
+
+      case GameStatus.RESET:
+        if (!_observable.isPaused) {
+          _observable.pause();
+        }
+        _reset();
+        _observable.resume();
+        break;
+    }
   }
 }
 

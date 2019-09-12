@@ -5,14 +5,15 @@ class FloorPainter extends CustomPainter {
   int _cellSize;
   Paint _paint;
   double _radius;
-  MaterialColor _color;
+  MaterialColor _snakeColor;
+  MaterialColor _eatColor;
 
   List<List<int>> _cells;
 
   Pair<int, int> _eatPoint;
 
   FloorPainter(
-      this._radius, this._color, this._cells, this._cellSize, this._eatPoint) {
+      this._radius, this._snakeColor, this._eatColor, this._cells, this._cellSize, this._eatPoint) {
     _paint = Paint()
       ..strokeWidth = 10.0
       ..style = PaintingStyle.fill;
@@ -20,7 +21,6 @@ class FloorPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    print("paint");
     _drawCells(canvas);
     _drawEatPoint(canvas);
   }
@@ -34,7 +34,7 @@ class FloorPainter extends CustomPainter {
     for (var i = 0; i < _cells.length; i++) {
       for (var j = 0; j < _cells[0].length; j++) {
         if (_cells[i][j] == 1) {
-          _paint.color = _color;
+          _paint.color = _snakeColor;
           canvas.drawCircle(
               Offset(i * _cellSize.toDouble() + _radius,
                   j * _cellSize.toDouble() + _radius),
@@ -54,7 +54,7 @@ class FloorPainter extends CustomPainter {
   }
 
   void _drawEatPoint(Canvas canvas) {
-    _paint.color = Colors.red;
+    _paint.color = _eatColor;
     canvas.drawCircle(
         Offset(_eatPoint.left * _cellSize.toDouble() + _radius,
             _eatPoint.right * _cellSize.toDouble() + _radius),
