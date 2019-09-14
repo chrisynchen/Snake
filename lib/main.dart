@@ -10,6 +10,7 @@ import 'package:snake/pair.dart';
 const CELL_SIZE = 20;
 const SNAKE_COLOR = Colors.green;
 const EAT_COLOR = Colors.brown;
+const SHAPE = Shape.Triangle;
 
 void main() => runApp(SnakeApp());
 
@@ -51,6 +52,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   double _widgetHeight;
 
+  int speedDuration = 300;
+
   var subject = PublishSubject<GameStatus>();
 
   @override
@@ -59,10 +62,10 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    _observable =
-        Observable.periodic(Duration(milliseconds: 500), (_) => snakeQueue)
-            .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
-            .listen(_updateView);
+    _observable = Observable.periodic(
+            Duration(milliseconds: speedDuration), (_) => snakeQueue)
+        .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
+        .listen(_updateView);
   }
 
   @override
@@ -191,8 +194,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       _reset();
     }
 
-    return FloorPainter(
-        CELL_SIZE / 2, SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint);
+    return FloorPainter(SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint, shape: SHAPE);
   }
 
   Pair<int, int> _getEatPoint() {
@@ -259,7 +261,5 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     }
   }
 }
-
-enum Direction { LEFT, RIGHT, UP, DOWN }
 
 enum GameStatus { START, PAUSE, RESET }
