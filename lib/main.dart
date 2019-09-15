@@ -10,7 +10,7 @@ import 'package:snake/pair.dart';
 const CELL_SIZE = 20;
 const SNAKE_COLOR = Colors.green;
 const EAT_COLOR = Colors.brown;
-const SHAPE = Shape.Triangle;
+const SHAPE = Shape.HEART;
 
 void main() => runApp(SnakeApp());
 
@@ -194,7 +194,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       _reset();
     }
 
-    return FloorPainter(SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint, shape: SHAPE);
+    return FloorPainter(SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint, shape: SHAPE, direction: _currentDirection);
   }
 
   Pair<int, int> _getEatPoint() {
