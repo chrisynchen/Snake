@@ -54,7 +54,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   int speedDuration = 300;
 
-  var subject = PublishSubject<GameStatus>();
+  final onTapSubject = PublishSubject<TapDownDetails>();
 
   @override
   void initState() {
@@ -66,11 +66,16 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
             Duration(milliseconds: speedDuration), (_) => snakeQueue)
         .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
         .listen(_updateView);
+
+    onTapSubject.distinct()
+    .throttleTime(const Duration(milliseconds: 300))
+    .listen(_onTapDown);
   }
 
   @override
   void dispose() {
     print("dispose");
+    onTapSubject.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -81,7 +86,6 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     if (state == AppLifecycleState.paused) {
       print("paused");
       _updateGameByStatus(GameStatus.PAUSE);
-      subject.close();
     } else if (state == AppLifecycleState.resumed) {
       print("resumed");
       _updateGameByStatus(GameStatus.START);
@@ -126,7 +130,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     return Scaffold(
         appBar: appBar,
         body: GestureDetector(
-            onTapDown: (TapDownDetails details) => _onTapDown(details),
+            onTapDown: (TapDownDetails details) => onTapSubject.add(details),
             child: Container(
                 width: _widgetWidth,
                 height: _widgetHeight,
@@ -163,11 +167,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       currentHead = Pair<int, int>(currentHead.left, currentHead.right + 1);
     }
 
-    if (currentHead.left < 0 ||
-        currentHead.left >= _cells.length ||
-        currentHead.right < 0 ||
-        currentHead.right >= _cells[0].length) {
-      _updateGameByStatus(GameStatus.PAUSE);
+    if (!_isValidStatus()) {
       return;
     }
 
@@ -259,6 +259,18 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
         _observable.resume();
         break;
     }
+  }
+
+  bool _isValidStatus() {
+    if (currentHead.left < 0 ||
+        currentHead.left >= _cells.length ||
+        currentHead.right < 0 ||
+        currentHead.right >= _cells[0].length) {
+      _updateGameByStatus(GameStatus.PAUSE);
+      return false;
+    }
+
+    return true;
   }
 }
 
