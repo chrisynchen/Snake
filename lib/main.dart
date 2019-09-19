@@ -7,7 +7,7 @@ import 'package:rxdart/rxdart.dart';
 import 'package:snake/floor_painter.dart';
 import 'package:snake/pair.dart';
 
-const CELL_SIZE = 20;
+const CELL_SIZE = 50;
 const SNAKE_COLOR = Colors.green;
 const EAT_COLOR = Colors.brown;
 const SHAPE = Shape.HEART;
@@ -51,6 +51,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
   double _widgetWidth;
 
   double _widgetHeight;
+
+  double _parentStartEndPadding;
 
   int speedDuration = 300;
 
@@ -123,6 +125,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       _widgetHeight = MediaQuery.of(context).size.height -
           MediaQuery.of(context).padding.top -
           appBar.preferredSize.height;
+      _parentStartEndPadding = (_widgetWidth % CELL_SIZE) / 2;
+      print('_widgetWidth:$_widgetWidth _widgetHeight:$_widgetHeight _parentStartEndPadding:$_parentStartEndPadding');
     }
 
     FloorPainter painter = _initPainter(context, _widgetWidth, _widgetHeight);
@@ -132,6 +136,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
         body: GestureDetector(
             onTapDown: (TapDownDetails details) => onTapSubject.add(details),
             child: Container(
+              margin: EdgeInsets.fromLTRB(_parentStartEndPadding, 0, _parentStartEndPadding, 0),
                 width: _widgetWidth,
                 height: _widgetHeight,
                 child: CustomPaint(painter: painter))));
