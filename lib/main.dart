@@ -10,7 +10,7 @@ import 'package:snake/pair.dart';
 const CELL_SIZE = 50;
 const SNAKE_COLOR = Colors.green;
 const EAT_COLOR = Colors.brown;
-const SHAPE = Shape.HEART;
+const SHAPE = Shape.CIRCLE;
 
 void main() => runApp(SnakeApp());
 
