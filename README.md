@@ -4,6 +4,7 @@ A small flutter game for fun.
 
 ## Licence
 
+```
    Copyright (C) 2019 Snake
    Copyright (C) 2018-2019 Chris Chen
 
@@ -18,3 +19,4 @@ A small flutter game for fun.
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
