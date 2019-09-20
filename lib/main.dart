@@ -65,6 +65,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   final _onTapSubject = PublishSubject<TapDownDetails>();
 
+  final _scaffoldKey = new GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     print("initState");
@@ -151,6 +153,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     FloorPainter painter = _initPainter(context, _widgetWidth, _widgetHeight);
 
     return Scaffold(
+        key: _scaffoldKey,
         appBar: appBar,
         backgroundColor: Colors.black,
         body: Center(
@@ -187,21 +190,23 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
   }
 
   void _updateView(Queue snakeQueue) {
+    var nextHead;
     if (_currentDirection == Direction.LEFT) {
-      _currentHead = PointOfCell(_currentHead.row - 1, _currentHead.column);
+      nextHead = PointOfCell(_currentHead.row - 1, _currentHead.column);
     } else if (_currentDirection == Direction.RIGHT) {
-      _currentHead = PointOfCell(_currentHead.row + 1, _currentHead.column);
+      nextHead = PointOfCell(_currentHead.row + 1, _currentHead.column);
     } else if (_currentDirection == Direction.UP) {
-      _currentHead = PointOfCell(_currentHead.row, _currentHead.column - 1);
+      nextHead = PointOfCell(_currentHead.row, _currentHead.column - 1);
     } else if (_currentDirection == Direction.DOWN) {
-      _currentHead = PointOfCell(_currentHead.row, _currentHead.column + 1);
+      nextHead = PointOfCell(_currentHead.row, _currentHead.column + 1);
     }
 
-    if (!_isValidStatus()) {
+    if (!_isValidStatus(nextHead)) {
       return;
     }
 
     setState(() {
+      _currentHead = nextHead;
       //generate eat point
       _eatPoint = _getEatPoint();
 
@@ -213,10 +218,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
         _eatPoint = null;
         if (snakeQueue.length % 5 == 0) {
           _addSpeed();
-          final snackBar = SnackBar(
-            content: Text('Speed up!!!!!'),
-          );
-          Scaffold.of(context).showSnackBar(snackBar);
+          _showSnackBar('Speed up!!!!!');
         }
       } else {
         PointOfCell first = snakeQueue.removeFirst();
@@ -241,7 +243,13 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     var random = Random();
     var row = random.nextInt(_cells.length);
     var column = random.nextInt(_cells[0].length);
-    return PointOfCell(row, column);
+    final newEatPoint = PointOfCell(row, column);
+    if (_snakeQueue.contains(newEatPoint)) {
+      // need generate again since it's snake body.
+      return _getEatPoint();
+    } else {
+      return newEatPoint;
+    }
   }
 
   void _reset() {
@@ -310,12 +318,20 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     }
   }
 
-  bool _isValidStatus() {
-    if (_currentHead.row < 0 ||
-        _currentHead.row >= _cells.length ||
-        _currentHead.column < 0 ||
-        _currentHead.column >= _cells[0].length) {
+  void _showSnackBar(String text) {
+    _scaffoldKey.currentState.hideCurrentSnackBar();
+    _scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(text)));
+  }
+
+  bool _isValidStatus(PointOfCell nextHead) {
+    if (nextHead.row < 0 ||
+        nextHead.row >= _cells.length ||
+        nextHead.column < 0 ||
+        nextHead.column >= _cells[0].length ||
+        _snakeQueue.contains(nextHead)) {
       _updateGameByStatus(GameStatus.PAUSE);
+      _showSnackBar('Game over. Please with try reload button');
       return false;
     }
 

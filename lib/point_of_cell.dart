@@ -6,7 +6,7 @@ class PointOfCell {
   final int column;
 
   @override
-  String toString() => 'Pair[$row, $column]';
+  String toString() => 'PointOfCell[$row, $column]';
 
   @override
   bool operator ==(Object other) =>
