@@ -18,6 +18,8 @@ const GAME_HEIGHT_OTHERS = 1080;
 const SNAKE_COLOR = Colors.blue;
 const EAT_COLOR = Colors.pink;
 const SHAPE = Shape.CIRCLE;
+const DEFAULT_TIME_PER_FEET = 300;
+const MINIMUM_TIME_PER_FEET = DEFAULT_TIME_PER_FEET / 10;
 
 void main() => runApp(SnakeApp());
 
@@ -59,7 +61,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   double _widgetHeight;
 
-  int speedDuration = 300;
+  int timePerFeet = DEFAULT_TIME_PER_FEET;
 
   final onTapSubject = PublishSubject<TapDownDetails>();
 
@@ -70,13 +72,13 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     _observable = Observable.periodic(
-            Duration(milliseconds: speedDuration), (_) => snakeQueue)
+            Duration(milliseconds: timePerFeet), (_) => snakeQueue)
         .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
         .listen(_updateView);
 
     onTapSubject
         .distinct()
-        .throttleTime(const Duration(milliseconds: 300))
+        .throttleTime(Duration(milliseconds: 300))
         .listen(_onTapDown);
   }
 
@@ -131,15 +133,12 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       var screenHeight = MediaQuery.of(context).size.height -
           MediaQuery.of(context).padding.top -
           appBar.preferredSize.height;
-      var gameDefaultWidth = Theme.of(context).platform == TargetPlatform.iOS ||
-              Theme.of(context).platform == TargetPlatform.android
-          ? GAME_WIDTH_MOBILE
-          : GAME_WIDTH_OTHERS;
+
+      // TODO need refine this because web not support dart.io for now.
+      var gameDefaultWidth =
+          screenWidth < 1080 ? GAME_WIDTH_MOBILE : GAME_WIDTH_OTHERS;
       var gameDefaultHeight =
-          Theme.of(context).platform == TargetPlatform.iOS ||
-                  Theme.of(context).platform == TargetPlatform.android
-              ? GAME_HEIGHT_MOBILE
-              : GAME_HEIGHT_OTHERS;
+          screenWidth < 1080 ? GAME_HEIGHT_MOBILE : GAME_HEIGHT_OTHERS;
       _widgetWidth = gameDefaultWidth <= 0 || gameDefaultWidth > screenWidth
           ? screenWidth
           : gameDefaultWidth.toDouble();
@@ -212,6 +211,13 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
       if (currentHead == _eatPoint) {
         _eatPoint = null;
+        if (snakeQueue.length % 5 == 0) {
+          _addSpeed();
+          final snackBar = SnackBar(
+            content: Text('Speed up!!!!!'),
+          );
+          Scaffold.of(context).showSnackBar(snackBar);
+        }
       } else {
         Pair first = snakeQueue.removeFirst();
         _cells[first.left][first.right] = 0;
@@ -262,6 +268,17 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     _eatPoint = null;
 
     _currentDirection = Direction.RIGHT;
+  }
+
+  void _addSpeed() {
+    _observable.cancel();
+    _observable = Observable.periodic(
+            Duration(milliseconds: timePerFeet), (_) => snakeQueue)
+        .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
+        .listen(_updateView);
+    final expectedTimePerFeet =
+        timePerFeet - (DEFAULT_TIME_PER_FEET / 10).floor();
+    timePerFeet = expectedTimePerFeet > 0 ? expectedTimePerFeet : timePerFeet;
   }
 
   void _initQueue(int middleRow, int middleColumn) {
