@@ -7,9 +7,14 @@ import 'package:rxdart/rxdart.dart';
 import 'package:snake/floor_painter.dart';
 import 'package:snake/pair.dart';
 
-const CELL_SIZE = 50;
-const SNAKE_COLOR = Colors.green;
-const EAT_COLOR = Colors.brown;
+///
+///Can custom your property here.
+///
+const CELL_SIZE = 30;
+const GAME_WIDTH = 360;
+const GAME_HEIGHT = 600;
+const SNAKE_COLOR = Colors.blue;
+const EAT_COLOR = Colors.pink;
 const SHAPE = Shape.CIRCLE;
 
 void main() => runApp(SnakeApp());
@@ -52,8 +57,6 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   double _widgetHeight;
 
-  double _parentStartEndPadding;
-
   int speedDuration = 300;
 
   final onTapSubject = PublishSubject<TapDownDetails>();
@@ -69,9 +72,10 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
         .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
         .listen(_updateView);
 
-    onTapSubject.distinct()
-    .throttleTime(const Duration(milliseconds: 300))
-    .listen(_onTapDown);
+    onTapSubject
+        .distinct()
+        .throttleTime(const Duration(milliseconds: 300))
+        .listen(_onTapDown);
   }
 
   @override
@@ -121,42 +125,52 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     );
 
     if (_widgetWidth == null || _widgetHeight == null) {
-      _widgetWidth = MediaQuery.of(context).size.width;
-      _widgetHeight = MediaQuery.of(context).size.height -
+      var screenWidth = MediaQuery.of(context).size.width;
+      var screenHeight = MediaQuery.of(context).size.height -
           MediaQuery.of(context).padding.top -
           appBar.preferredSize.height;
-      _parentStartEndPadding = (_widgetWidth % CELL_SIZE) / 2;
-      print('_widgetWidth:$_widgetWidth _widgetHeight:$_widgetHeight _parentStartEndPadding:$_parentStartEndPadding');
+      _widgetWidth = GAME_WIDTH <= 0 || GAME_WIDTH > screenWidth
+          ? screenWidth
+          : GAME_WIDTH.toDouble();
+      _widgetHeight = GAME_HEIGHT <= 0 || GAME_HEIGHT > screenHeight
+          ? screenHeight
+          : GAME_HEIGHT.toDouble();
     }
 
     FloorPainter painter = _initPainter(context, _widgetWidth, _widgetHeight);
 
     return Scaffold(
         appBar: appBar,
-        body: GestureDetector(
-            onTapDown: (TapDownDetails details) => onTapSubject.add(details),
-            child: Container(
-              margin: EdgeInsets.fromLTRB(_parentStartEndPadding, 0, _parentStartEndPadding, 0),
-                width: _widgetWidth,
-                height: _widgetHeight,
-                child: CustomPaint(painter: painter))));
+        backgroundColor: Colors.black,
+        body: Center(
+            child: GestureDetector(
+                onTapDown: (TapDownDetails details) =>
+                    onTapSubject.add(details),
+                child: Container(
+                  color: Colors.white,
+                    width: _widgetWidth,
+                    height: _widgetHeight,
+                    child: CustomPaint(painter: painter)))));
   }
 
   void _onTapDown(TapDownDetails details) {
-    var xCell = details.globalPosition.dx / CELL_SIZE;
-    var yCell = details.globalPosition.dy / CELL_SIZE;
+    var xCell = details.localPosition.dx / CELL_SIZE;
+    var yCell = details.localPosition.dy / CELL_SIZE;
+
+    var diffX = currentHead.left - xCell + 1;
+    var diffY = currentHead.right - yCell + 1;
     if (_currentDirection == Direction.UP ||
         _currentDirection == Direction.DOWN) {
-      if (currentHead.left - xCell > 0) {
+      if (diffX > 1) {
         _currentDirection = Direction.LEFT;
-      } else {
+      } else if (diffX < 0) {
         _currentDirection = Direction.RIGHT;
       }
     } else {
-      if ((currentHead.right - yCell) < 0) {
-        _currentDirection = Direction.DOWN;
-      } else {
+      if (diffY > 1) {
         _currentDirection = Direction.UP;
+      } else if (diffY < 0) {
+        _currentDirection = Direction.DOWN;
       }
     }
   }
@@ -199,7 +213,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       _reset();
     }
 
-    return FloorPainter(SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint, shape: SHAPE, direction: _currentDirection);
+    return FloorPainter(SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint,
+        shape: SHAPE, direction: _currentDirection);
   }
 
   Pair<int, int> _getEatPoint() {
