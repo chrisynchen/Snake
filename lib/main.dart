@@ -11,8 +11,10 @@ import 'package:snake/pair.dart';
 ///Can custom your property here.
 ///
 const CELL_SIZE = 30;
-const GAME_WIDTH = 360;
-const GAME_HEIGHT = 600;
+const GAME_WIDTH_MOBILE = 360;
+const GAME_HEIGHT_MOBILE = 600;
+const GAME_WIDTH_OTHERS = 1920;
+const GAME_HEIGHT_OTHERS = 1080;
 const SNAKE_COLOR = Colors.blue;
 const EAT_COLOR = Colors.pink;
 const SHAPE = Shape.CIRCLE;
@@ -129,12 +131,22 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       var screenHeight = MediaQuery.of(context).size.height -
           MediaQuery.of(context).padding.top -
           appBar.preferredSize.height;
-      _widgetWidth = GAME_WIDTH <= 0 || GAME_WIDTH > screenWidth
+      var gameDefaultWidth = Theme.of(context).platform == TargetPlatform.iOS ||
+              Theme.of(context).platform == TargetPlatform.android
+          ? GAME_WIDTH_MOBILE
+          : GAME_WIDTH_OTHERS;
+      var gameDefaultHeight =
+          Theme.of(context).platform == TargetPlatform.iOS ||
+                  Theme.of(context).platform == TargetPlatform.android
+              ? GAME_HEIGHT_MOBILE
+              : GAME_HEIGHT_OTHERS;
+      _widgetWidth = gameDefaultWidth <= 0 || gameDefaultWidth > screenWidth
           ? screenWidth
-          : GAME_WIDTH.toDouble();
-      _widgetHeight = GAME_HEIGHT <= 0 || GAME_HEIGHT > screenHeight
+          : gameDefaultWidth.toDouble();
+      _widgetHeight = gameDefaultHeight <= 0 || gameDefaultHeight > screenHeight
           ? screenHeight
-          : GAME_HEIGHT.toDouble();
+          : gameDefaultHeight.toDouble();
+      print('platform: ${Theme.of(context).platform}');
     }
 
     FloorPainter painter = _initPainter(context, _widgetWidth, _widgetHeight);
@@ -147,7 +159,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
                 onTapDown: (TapDownDetails details) =>
                     onTapSubject.add(details),
                 child: Container(
-                  color: Colors.white,
+                    color: Colors.white,
                     width: _widgetWidth,
                     height: _widgetHeight,
                     child: CustomPaint(painter: painter)))));
