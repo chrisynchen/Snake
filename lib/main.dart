@@ -72,11 +72,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     print("initState");
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-
-    _observable = Observable.periodic(
-            Duration(milliseconds: _timePerFeet), (_) => _snakeQueue)
-        .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
-        .listen(_updateView);
+    _setSpeed(_timePerFeet);
 
     _onTapSubject
         .distinct()
@@ -274,19 +270,25 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     PointOfCell last = _snakeQueue.last;
     _currentHead = PointOfCell(last.row, last.column);
     _eatPoint = null;
+    _timePerFeet = DEFAULT_TIME_PER_FEET;
+    _setSpeed(_timePerFeet);
 
     _currentDirection = Direction.RIGHT;
   }
 
   void _addSpeed() {
-    _observable.cancel();
-    _observable = Observable.periodic(
-            Duration(milliseconds: _timePerFeet), (_) => _snakeQueue)
-        .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
-        .listen(_updateView);
+    _setSpeed(_timePerFeet);
     final expectedTimePerFeet =
         _timePerFeet - (DEFAULT_TIME_PER_FEET / 10).floor();
     _timePerFeet = expectedTimePerFeet > 0 ? expectedTimePerFeet : _timePerFeet;
+  }
+
+  void _setSpeed(int timePerFeet) {
+    _observable?.cancel();
+    _observable = Observable.periodic(
+            Duration(milliseconds: timePerFeet), (_) => _snakeQueue)
+        .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
+        .listen(_updateView);
   }
 
   void _initQueue(int middleRow, int middleColumn) {
