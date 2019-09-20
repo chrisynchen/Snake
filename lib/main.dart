@@ -5,7 +5,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:snake/floor_painter.dart';
-import 'package:snake/pair.dart';
+import 'package:snake/point_of_cell.dart';
 
 ///
 ///Can custom your property here.
@@ -47,23 +47,23 @@ class SnakeHome extends StatefulWidget {
 class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
   List<List<int>> _cells;
 
-  Queue snakeQueue = Queue<Pair<int, int>>();
+  Queue _snakeQueue = Queue<PointOfCell>();
 
   StreamSubscription _observable;
 
   Direction _currentDirection = Direction.RIGHT;
 
-  Pair<int, int> currentHead;
+  PointOfCell _currentHead;
 
-  Pair<int, int> _eatPoint;
+  PointOfCell _eatPoint;
 
   double _widgetWidth;
 
   double _widgetHeight;
 
-  int timePerFeet = DEFAULT_TIME_PER_FEET;
+  int _timePerFeet = DEFAULT_TIME_PER_FEET;
 
-  final onTapSubject = PublishSubject<TapDownDetails>();
+  final _onTapSubject = PublishSubject<TapDownDetails>();
 
   @override
   void initState() {
@@ -72,11 +72,11 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
 
     _observable = Observable.periodic(
-            Duration(milliseconds: timePerFeet), (_) => snakeQueue)
+            Duration(milliseconds: _timePerFeet), (_) => _snakeQueue)
         .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
         .listen(_updateView);
 
-    onTapSubject
+    _onTapSubject
         .distinct()
         .throttleTime(Duration(milliseconds: 300))
         .listen(_onTapDown);
@@ -85,7 +85,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
   @override
   void dispose() {
     print("dispose");
-    onTapSubject.close();
+    _onTapSubject.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -156,7 +156,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
         body: Center(
             child: GestureDetector(
                 onTapDown: (TapDownDetails details) =>
-                    onTapSubject.add(details),
+                    _onTapSubject.add(details),
                 child: Container(
                     color: Colors.white,
                     width: _widgetWidth,
@@ -168,8 +168,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     var xCell = details.localPosition.dx / CELL_SIZE;
     var yCell = details.localPosition.dy / CELL_SIZE;
 
-    var diffX = currentHead.left - xCell + 1;
-    var diffY = currentHead.right - yCell + 1;
+    var diffX = _currentHead.row - xCell + 1;
+    var diffY = _currentHead.column - yCell + 1;
     if (_currentDirection == Direction.UP ||
         _currentDirection == Direction.DOWN) {
       if (diffX > 1) {
@@ -188,13 +188,13 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   void _updateView(Queue snakeQueue) {
     if (_currentDirection == Direction.LEFT) {
-      currentHead = Pair<int, int>(currentHead.left - 1, currentHead.right);
+      _currentHead = PointOfCell(_currentHead.row - 1, _currentHead.column);
     } else if (_currentDirection == Direction.RIGHT) {
-      currentHead = Pair<int, int>(currentHead.left + 1, currentHead.right);
+      _currentHead = PointOfCell(_currentHead.row + 1, _currentHead.column);
     } else if (_currentDirection == Direction.UP) {
-      currentHead = Pair<int, int>(currentHead.left, currentHead.right - 1);
+      _currentHead = PointOfCell(_currentHead.row, _currentHead.column - 1);
     } else if (_currentDirection == Direction.DOWN) {
-      currentHead = Pair<int, int>(currentHead.left, currentHead.right + 1);
+      _currentHead = PointOfCell(_currentHead.row, _currentHead.column + 1);
     }
 
     if (!_isValidStatus()) {
@@ -205,11 +205,11 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       //generate eat point
       _eatPoint = _getEatPoint();
 
-      _cells[_eatPoint.left][_eatPoint.right] = 1;
-      _cells[currentHead.left][currentHead.right] = 1;
-      snakeQueue.add(currentHead);
+      _cells[_eatPoint.row][_eatPoint.column] = 1;
+      _cells[_currentHead.row][_currentHead.column] = 1;
+      snakeQueue.add(_currentHead);
 
-      if (currentHead == _eatPoint) {
+      if (_currentHead == _eatPoint) {
         _eatPoint = null;
         if (snakeQueue.length % 5 == 0) {
           _addSpeed();
@@ -219,8 +219,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
           Scaffold.of(context).showSnackBar(snackBar);
         }
       } else {
-        Pair first = snakeQueue.removeFirst();
-        _cells[first.left][first.right] = 0;
+        PointOfCell first = snakeQueue.removeFirst();
+        _cells[first.row][first.column] = 0;
       }
     });
   }
@@ -235,13 +235,13 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
         shape: SHAPE, direction: _currentDirection);
   }
 
-  Pair<int, int> _getEatPoint() {
+  PointOfCell _getEatPoint() {
     if (_eatPoint != null) return _eatPoint;
 
     var random = Random();
     var row = random.nextInt(_cells.length);
     var column = random.nextInt(_cells[0].length);
-    return Pair<int, int>(row, column);
+    return PointOfCell(row, column);
   }
 
   void _reset() {
@@ -263,8 +263,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     _cells[middleColumn - 1][middleRow] = 1;
     _cells[middleColumn][middleRow] = 1;
 
-    Pair last = snakeQueue.last;
-    currentHead = Pair<int, int>(last.left, last.right);
+    PointOfCell last = _snakeQueue.last;
+    _currentHead = PointOfCell(last.row, last.column);
     _eatPoint = null;
 
     _currentDirection = Direction.RIGHT;
@@ -273,19 +273,19 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
   void _addSpeed() {
     _observable.cancel();
     _observable = Observable.periodic(
-            Duration(milliseconds: timePerFeet), (_) => snakeQueue)
+            Duration(milliseconds: _timePerFeet), (_) => _snakeQueue)
         .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
         .listen(_updateView);
     final expectedTimePerFeet =
-        timePerFeet - (DEFAULT_TIME_PER_FEET / 10).floor();
-    timePerFeet = expectedTimePerFeet > 0 ? expectedTimePerFeet : timePerFeet;
+        _timePerFeet - (DEFAULT_TIME_PER_FEET / 10).floor();
+    _timePerFeet = expectedTimePerFeet > 0 ? expectedTimePerFeet : _timePerFeet;
   }
 
   void _initQueue(int middleRow, int middleColumn) {
-    snakeQueue.clear();
-    snakeQueue.add(Pair<int, int>(middleColumn - 2, middleRow));
-    snakeQueue.add(Pair<int, int>(middleColumn - 1, middleRow));
-    snakeQueue.add(Pair<int, int>(middleColumn, middleRow));
+    _snakeQueue.clear();
+    _snakeQueue.add(PointOfCell(middleColumn - 2, middleRow));
+    _snakeQueue.add(PointOfCell(middleColumn - 1, middleRow));
+    _snakeQueue.add(PointOfCell(middleColumn, middleRow));
   }
 
   void _updateGameByStatus(GameStatus status) {
@@ -311,10 +311,10 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
   }
 
   bool _isValidStatus() {
-    if (currentHead.left < 0 ||
-        currentHead.left >= _cells.length ||
-        currentHead.right < 0 ||
-        currentHead.right >= _cells[0].length) {
+    if (_currentHead.row < 0 ||
+        _currentHead.row >= _cells.length ||
+        _currentHead.column < 0 ||
+        _currentHead.column >= _cells[0].length) {
       _updateGameByStatus(GameStatus.PAUSE);
       return false;
     }

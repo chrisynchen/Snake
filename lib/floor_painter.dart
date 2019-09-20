@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:snake/pair.dart';
+import 'package:snake/point_of_cell.dart';
 
 enum Shape { CIRCLE, SQUARE, TRIANGLE, HEART }
 
@@ -15,7 +15,7 @@ class FloorPainter extends CustomPainter {
 
   List<List<int>> _cells;
 
-  Pair<int, int> _eatPoint;
+  PointOfCell _eatPoint;
 
   Shape shape = Shape.CIRCLE;
 
@@ -64,20 +64,20 @@ class FloorPainter extends CustomPainter {
 
   void _drawEatPoint(Canvas canvas) {
     _paint.color = Colors.white;
-    _drawRect(canvas, _paint, _eatPoint.left, _eatPoint.right);
+    _drawRect(canvas, _paint, _eatPoint.row, _eatPoint.column);
 
     _paint.color = _eatColor;
 
     if (shape == Shape.SQUARE) {
-      _drawRect(canvas, _paint, _eatPoint.left, _eatPoint.right);
+      _drawRect(canvas, _paint, _eatPoint.row, _eatPoint.column);
     } else if (shape == Shape.TRIANGLE) {
       _drawTriangle(
-          canvas, _paint, Direction.UP, _eatPoint.left, _eatPoint.right);
+          canvas, _paint, Direction.UP, _eatPoint.row, _eatPoint.column);
     } else if (shape == Shape.HEART) {
       _drawHeart(
-          canvas, _paint, Direction.DOWN, _eatPoint.left, _eatPoint.right);
+          canvas, _paint, Direction.DOWN, _eatPoint.row, _eatPoint.column);
     } else {
-      _drawCircle(canvas, _paint, _eatPoint.left, _eatPoint.right);
+      _drawCircle(canvas, _paint, _eatPoint.row, _eatPoint.column);
     }
   }
 
