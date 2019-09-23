@@ -4,8 +4,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
-import 'package:snake/floor_painter.dart';
+import 'package:snake/game_painter.dart';
 import 'package:snake/point_of_cell.dart';
+
+import 'flutter_icon_painter.dart';
 
 ///
 ///Can custom your property here.
@@ -20,6 +22,7 @@ const EAT_COLOR = Colors.pink;
 const SHAPE = Shape.CIRCLE;
 const DEFAULT_TIME_PER_FEET = 300;
 const MINIMUM_TIME_PER_FEET = DEFAULT_TIME_PER_FEET / 10;
+const FLUTTER_ICON_SIZE = 30;
 
 void main() => runApp(SnakeApp());
 
@@ -100,7 +103,8 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    AppBar appBar = AppBar(
+    final AppBar appBar = AppBar(
+      leading: CustomPaint(painter: FlutterIconPainter(FLUTTER_ICON_SIZE)),
       title: Text('Snake Game By Chris'),
       actions: <Widget>[
         IconButton(
@@ -143,7 +147,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
           : gameDefaultHeight.toDouble();
     }
 
-    FloorPainter painter = _initPainter();
+    GamePainter painter = _initPainter();
 
     return Scaffold(
         key: _scaffoldKey,
@@ -220,12 +224,12 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     });
   }
 
-  FloorPainter _initPainter() {
+  GamePainter _initPainter() {
     if (_cells == null) {
       _reset();
     }
 
-    return FloorPainter(SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint,
+    return GamePainter(SNAKE_COLOR, EAT_COLOR, _cells, CELL_SIZE, _eatPoint,
         shape: SHAPE, direction: _currentDirection);
   }
 

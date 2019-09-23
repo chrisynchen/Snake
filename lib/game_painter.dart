@@ -7,7 +7,7 @@ enum Shape { CIRCLE, SQUARE, TRIANGLE, HEART }
 
 enum Direction { LEFT, RIGHT, UP, DOWN }
 
-class FloorPainter extends CustomPainter {
+class GamePainter extends CustomPainter {
   final int _cellSize;
   final Paint _paint = Paint()
     ..strokeWidth = 10.0
@@ -23,7 +23,7 @@ class FloorPainter extends CustomPainter {
 
   final Direction direction;
 
-  FloorPainter(this._snakeColor, this._eatColor, this._cells, this._cellSize,
+  GamePainter(this._snakeColor, this._eatColor, this._cells, this._cellSize,
       this._eatPoint,
       {this.shape = Shape.CIRCLE, this.direction = Direction.RIGHT});
 
@@ -34,7 +34,7 @@ class FloorPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(FloorPainter oldDelegate) {
+  bool shouldRepaint(GamePainter oldDelegate) {
     return true;
   }
 
