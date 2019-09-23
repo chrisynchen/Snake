@@ -69,7 +69,6 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   @override
   void initState() {
-    print("initState");
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _setSpeed(_timePerFeet);
@@ -82,7 +81,6 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    print("dispose");
     _onTapSubject.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -143,10 +141,9 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
       _widgetHeight = gameDefaultHeight <= 0 || gameDefaultHeight > screenHeight
           ? screenHeight
           : gameDefaultHeight.toDouble();
-      print('platform: ${Theme.of(context).platform}');
     }
 
-    FloorPainter painter = _initPainter(context, _widgetWidth, _widgetHeight);
+    FloorPainter painter = _initPainter();
 
     return Scaffold(
         key: _scaffoldKey,
@@ -223,8 +220,7 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
     });
   }
 
-  FloorPainter _initPainter(
-      BuildContext context, double widgetWidth, double widgetHeight) {
+  FloorPainter _initPainter() {
     if (_cells == null) {
       _reset();
     }

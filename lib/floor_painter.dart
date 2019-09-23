@@ -8,26 +8,24 @@ enum Shape { CIRCLE, SQUARE, TRIANGLE, HEART }
 enum Direction { LEFT, RIGHT, UP, DOWN }
 
 class FloorPainter extends CustomPainter {
-  int _cellSize;
-  Paint _paint;
-  MaterialColor _snakeColor;
-  MaterialColor _eatColor;
+  final int _cellSize;
+  final Paint _paint = Paint()
+    ..strokeWidth = 10.0
+    ..style = PaintingStyle.fill;
+  final MaterialColor _snakeColor;
+  final MaterialColor _eatColor;
 
-  List<List<int>> _cells;
+  final List<List<int>> _cells;
 
-  PointOfCell _eatPoint;
+  final PointOfCell _eatPoint;
 
-  Shape shape = Shape.CIRCLE;
+  final Shape shape;
 
-  Direction direction = Direction.RIGHT;
+  final Direction direction;
 
   FloorPainter(this._snakeColor, this._eatColor, this._cells, this._cellSize,
       this._eatPoint,
-      {this.shape, this.direction}) {
-    _paint = Paint()
-      ..strokeWidth = 10.0
-      ..style = PaintingStyle.fill;
-  }
+      {this.shape = Shape.CIRCLE, this.direction = Direction.RIGHT});
 
   @override
   void paint(Canvas canvas, Size size) {

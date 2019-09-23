@@ -1,7 +1,7 @@
 class PointOfCell {
-  PointOfCell(this.row, this.column, {this.pointType});
+  PointOfCell(this.row, this.column, {this.pointType = PointType.SNAKE_POINT});
 
-  PointType pointType = PointType.SNAKE_POINT;
+  final PointType pointType;
   final int row;
   final int column;
 
