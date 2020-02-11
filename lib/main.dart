@@ -285,10 +285,9 @@ class _SnakeHomeState extends State<SnakeHome> with WidgetsBindingObserver {
 
   void _setSpeed(int timePerFeet) {
     _observable?.cancel();
-    _observable = Observable.periodic(
-            Duration(milliseconds: timePerFeet), (_) => _snakeQueue)
-        .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
-        .listen(_updateView);
+    _observable = Stream.periodic(Duration(milliseconds: timePerFeet), (_) => _snakeQueue)
+            .skipWhile((Queue snakeQueue) => snakeQueue.length <= 0)
+            .listen(_updateView);
   }
 
   void _initQueue(int middleRow, int middleColumn) {
